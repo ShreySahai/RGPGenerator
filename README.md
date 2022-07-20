@@ -1,3 +1,5 @@
+
+
 RGP Table Generator v.0
 -----------------------
 - Support for CoolProp and REFPROP backends
@@ -19,6 +21,10 @@ Sample command to generate a RGP table for CO2
 
 `python3` should match the python 3 interpreter alias of your operational system
 
+Mixtures only working with `REFPROP` backend, in this case fluid name should be given as the AbstractState string standard, and mass fractions as a list `0,1`, example:
+
+```python3.8 RGP_.py -f 'CO2&Methane' -mf 0.95,0.05 -b REFPROP -p 1e6,20e6 -T 250,500 -rp /home/ppiper/MEGA/refprop -nT 100 -np 100 -me True -op ./outputs/ -o CO2_50_50_COOLPROP.rgp```
+
 
 Command Line Options
 --------------------
@@ -34,13 +40,6 @@ optional arguments:
   -np , --n_pressures   Number of points to discretize pressure range
   -nT , --n_temperatures 
                         Number of points to discretize temperature range
-  -ns , --n_saturation 
-                        Number of points to discretize saturation tables
-  -mo , --model         ANSYS RGP model e.g. (1 - single phase,2 - multiphase
-                        equilibrium, 3 - multiphase non-equilibrium)
   -o , --output_file    Output file name
   -me , --metastable    Turn metastable region on and off e.g. (True, False)
-  -sp , --spinodal      Change the saturation line by the spinodal e.g. (True,
-                        False)
-  -sat , --SAT_TABLE    Turn SAT_TABLE on and off e.g. (True, False)
 ```
