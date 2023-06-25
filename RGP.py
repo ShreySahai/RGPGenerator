@@ -17,7 +17,7 @@ from CoolProp.CoolProp import PropsSI
 import argparse
 import textwrap
 import pandas as pd
-from sklearn import mixture
+#from sklearn import mixture
 import os
 import sys
 
@@ -662,9 +662,10 @@ class RGP:
                     self.table[prop+'sat'][j] = self.fluid.getProp(prop)
 
             else:
-                if p < self.pcrit:
-                    self.fluid.updatePQ(p, Q)
-                else:
+                try:
+                    if p < self.pcrit:
+                        self.fluid.updatePQ(p, Q)
+                except:
                     self.fluid = specify_phase(self.fluid , p, T, self.pcrit, self.Tcrit)
                     self.fluid.updateTP(self.Tcrit, p)
                 for prop in ['T', 'p'] + self.properties:
