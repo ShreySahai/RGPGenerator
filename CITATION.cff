@@ -4,6 +4,8 @@ authors:
   - family-names: Carvalho
     given-names: Allan Moreira
     #orcid: https://orcid.org/1234-5678-9101-1121
+  - family-names: Matos
+    given-names: Julia
 title: "Table Generator for Real Gas Properties"
 version: 0.0.1
 #doi: 10.5281/zenodo.1234
