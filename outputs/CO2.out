@@ -1,0 +1,15 @@
+python RGP.py -f CO2 -b HEOS -p 1e6,20e6 -T 250,500 -nT 50 -np 100 -op ./outputs/ -o CO2.rgp
+RGP table for fluid: 
+CarbonDioxide [HelmholtzEOSBackend, CoolProp 6.4.3]
+T: [250.0: 500.0] K
+p: [1000.0: 20000.0] kPa
+RGP Size: (NT=50, Np=100)
+Allocating Super tables... 	0.0001 sec
+Generating Super Tables... 	0.2381 sec
+Allocating Sat Table... 	0.0001 sec
+Generating Sat Table... 	0.0137 sec
+Writing Super Tables... 	0.0703 sec
+Writing Super Tables Matrices... 	0.0017 sec
+RGP file written... 		./outputs/CO2.rgp
+Total elapsed time... 		0.3248 sec
+END

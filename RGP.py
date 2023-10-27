@@ -20,6 +20,8 @@ import pandas as pd
 #from sklearn import mixture
 import os
 import sys
+from pathlib import Path
+from scipy.io import savemat
 
 from matplotlib import rc
 plt.rcParams.update({
@@ -418,7 +420,9 @@ class RGP:
         self.writeHeader()
         self.writeData()
         self.writeSuperTables()
+        self.writeSuperTablesMatrices()
         self.writeSatTable()
+        self.writeSatTableMatrices()
         self.closeFile()
         self.etime()
         
@@ -900,8 +904,6 @@ class RGP:
         
         etime = time.time() - stime
         self.print('{:.4f}'.format(etime) + ' sec')
-
-    
     
 
     def genTables(self, NT, Np):
@@ -947,6 +949,43 @@ class RGP:
             etime = time.time() - stime
             self.print('{:.4f}'.format(etime) + ' sec')
 
+    def writeSatTableMatrices(self):
+    
+        if self.sat_table:
+            dict_mat = {}
+            self.print('Writing Sat Table Matrices... ', end='\t\t')
+            stime = time.time()
+
+            
+            for i, t in enumerate(['p', 'T']): 
+                if self.spinodal:
+                    dict_mat[t+'spinliq'] = self.table[t+'spinliq']
+                else:
+                    dict_mat[t+'satliq'] = self.table[t+'satliq']
+            
+            for i, t in enumerate(['p', 'T']):
+                dict_mat[t+'satvap'] = self.table[t+'satvap']
+            
+            for i, t in enumerate(self.properties):
+                if self.spinodal:
+                    dict_mat[t+'spinliq'] = self.table[t+'spinliq']
+                else:
+                    dict_mat[t+'satliq'] = self.table[t+'satliq']
+                dict_mat[t+'satvap']=self.table[t+'satvap']
+            
+            fname = Path(self.fname).resolve().with_suffix('').__str__()
+            fname += '_sat.mat'
+            savemat(file_name=fname, 
+                    mdict=dict_mat,
+                    appendmat=False,
+                    format='5',
+                    long_field_names=False,
+                    do_compression=False,
+                    oned_as='row')
+            
+            etime = time.time() - stime
+            self.print('{:.4f}'.format(etime) + ' sec')
+
     def writeSuperTables(self):
         f = self.f
         self.print('Writing Super Tables... ', end='\t')
@@ -957,6 +996,7 @@ class RGP:
             f.write('\t'+ str(self.NT) + '\t' + str(self.Np))
             f.write(vec2str(self.table['T']))
             f.write(vec2str(self.table['p']))
+
             
             if self.metastable:
                 f.write(vec2str(self.table[t+'meta'].flatten()))
@@ -968,6 +1008,35 @@ class RGP:
 
             f.write(' \n')
 
+        etime = time.time() - stime
+        self.print('{:.4f}'.format(etime) + ' sec')
+
+    def writeSuperTablesMatrices(self): 
+        dict_mat = {}
+        self.print('Writing Super Tables Matrices... ', end='\t')
+        stime = time.time()
+
+        dict_mat={
+            'T': self.table['T'],
+            'p': self.table['p']}
+        for i, t in enumerate(self.properties):
+    
+            if self.metastable:
+                dict_mat[t] = self.table[t+'meta']
+            else:
+                dict_mat[t] = self.table[t]
+
+            dict_mat['Tsat'] = self.table['Tsat']
+            dict_mat[t+'sat'] = self.table[t+'sat']
+
+        savemat(file_name=Path(self.fname).with_suffix('.mat'), 
+                mdict=dict_mat,
+                appendmat=False,
+                format='5',
+                long_field_names=False,
+                do_compression=False,
+                oned_as='row')
+       
         etime = time.time() - stime
         self.print('{:.4f}'.format(etime) + ' sec')
 
@@ -1255,7 +1324,7 @@ desc=textwrap.dedent('''\
 
 ap = argparse.ArgumentParser(description=desc,formatter_class=argparse.RawDescriptionHelpFormatter)#,usage='%(prog)s [optional argument] value')
 ap.add_argument("-f", "--fluid", required=True, help="CoolProp fluidname")
-ap.add_argument("-b", "--backend", required=False, help="CoolProp backend e.g. (HEOS, REFPROP)", default='HEOS', choices=['HEOS','REFPROP'])
+ap.add_argument("-b", "--backend", required=False, help="CoolProp backend e.g. (HEOS, REFPROP)", default='HEOS', choices=['HEOS','REFPROP', 'SRK', 'PR'])
 ap.add_argument("-rp", "--refprop_path", required=False, help="REFPROP install path")
 ap.add_argument("-p", "--pressures", required=True, help="Pressure range for the RGP table [Pa] e.g. 'pmin','pmax' ")
 ap.add_argument("-T", "--temperatures", required=True, help="Temperature range for the RGP table [K] e.g. 'Tmin','Tmax' ")
