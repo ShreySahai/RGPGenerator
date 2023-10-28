@@ -1,5 +1,0 @@
-CoolProp==6.4.3
-matplotlib==3.5.1
-numpy==1.22.1
-pandas==1.4.0
-scipy==1.7.3
