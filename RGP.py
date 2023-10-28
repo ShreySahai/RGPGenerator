@@ -366,7 +366,7 @@ class RGP:
         p = [float(pi) for pi in args['pressures'].split(",")]
         T = [float(pi) for pi in args['temperatures'].split(",")]
         if args['sat_table_range'] is not None:
-            Tsat = [float(pi) for pi in args['Sat_table_range'].split(",")]
+            Tsat = [float(pi) for pi in args['sat_table_range'].split(",")]
         else:
             Tsat = None
         NT = int(args['n_temperatures'])
@@ -872,7 +872,7 @@ class RGP:
             pminsatliq = self.fluid.p()
             self.fluid.updateQT(0, self.Tmaxsat)
             pmaxsatliq = self.pcrit
-            if abs(self.fluid.p() - self.pcrit) < 1e-6:
+            if 1 or abs(self.fluid.p() - self.pcrit) < 1e-6:
                 self.Tmaxsat = self.Tcrit
                 pmaxsatliq = self.fluid.p()
             self.table['psatliq'] = np.linspace(pminsatliq, pmaxsatliq, self.Ns)
@@ -888,7 +888,7 @@ class RGP:
             pminsatvap = self.fluid.p()
             self.fluid.updateQT(1, self.Tmaxsat)
             pmaxsatvap = self.pcrit
-            if abs(self.fluid.p() - self.pcrit) < 1e-6:
+            if 1 or abs(self.fluid.p() - self.pcrit) < 1e-6:
                 self.Tmaxsat = self.Tcrit
                 pmaxsatvap = self.fluid.p()
             self.table['psatvap'] = np.linspace(pminsatvap, pmaxsatvap, self.Ns)
