@@ -607,8 +607,10 @@ class RGP:
         elif self.sat_phase == 'gas':
             Q = 1
 
+        print(len(self.table['p']),len(self.table['T']))
         for j, p in enumerate(self.table['p']):
             for i, T in enumerate(self.table['T']):
+                print(j,i,end="\r")
                 # Controla se corrige o erro de pressão muito proximo a saturação
                 fix = False
                 if self.fluid.backend!='REFPROP':
@@ -991,7 +993,9 @@ class RGP:
         self.print('Writing Super Tables... ', end='\t')
         stime = time.time()
 
+        print(len(self.properties))
         for i, t in enumerate(self.properties):
+            print(i,end="\r")
             f.write('$TABLE_'+str(i+1)+' \n')
             f.write('\t'+ str(self.NT) + '\t' + str(self.Np))
             f.write(vec2str(self.table['T']))
