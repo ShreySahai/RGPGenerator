@@ -6,7 +6,7 @@ import numpy as np
 import time
 from numpy import meshgrid
 from pandas import to_timedelta
-from scipy import interpolate 
+from scipy import interpolate
 import matplotlib.pyplot as plt
 from scipy.interpolate import UnivariateSpline
 from numpy.linalg import solve
@@ -34,14 +34,14 @@ import warnings
 warnings.filterwarnings("ignore")
 
 def getUnit(prop):
-    return {'h':     '[J/kg]', 
-            'c':     '[m/s]', 
-            'v':     '[m^3/kg]', 
-            'cv':    '[J/kg/K]', 
+    return {'h':     '[J/kg]',
+            'c':     '[m/s]',
+            'v':     '[m^3/kg]',
+            'cv':    '[J/kg/K]',
             'cp':    '[J/kg/K]',
-            'dPdvT': '[Pa/m^3/kg]', 
-            's':     '[J/kg/K]', 
-            'mu':    '[Pa\;s]', 
+            'dPdvT': '[Pa/m^3/kg]',
+            's':     '[J/kg/K]',
+            'mu':    '[Pa\;s]',
             'k':     '[W/m/K]',
             'p':     '[Pa]',
             'T':     '[K]'}[prop]
@@ -86,7 +86,7 @@ def parseBool(arg):
     if arg == 'False' or arg == 0 or arg==False:
         ret = False
     elif arg == 'True' or arg == 1 or arg==True:
-        ret = True    
+        ret = True
     return ret
 
 def setREFPROP_PATH(path):
@@ -106,12 +106,12 @@ def vec2str(vec):
     return string
 
 
-def TSat2spinodal(AS, FluidName, backend, T_sat):    
+def TSat2spinodal(AS, FluidName, backend, T_sat):
     # Inspired: https://github.com/CoolProp/CoolProp/blob/master/doc/notebooks/Maxwell_Loop.ipynb
     # Paper: https://link.springer.com/article/10.1134/S0036024406040030
 
     FluidName
-    myIdx = 0   
+    myIdx = 0
     # Constants
     eps = 1e-6
     kilo = 1e3
@@ -155,7 +155,7 @@ def TSat2spinodal(AS, FluidName, backend, T_sat):
     dP_dD_T_liq = np.empty(nPoints)
     d2P_dD2_T_liq = np.empty(nPoints)
     d2P_dDdT_liq = np.empty(nPoints)
-    # metastable coeffs: 
+    # metastable coeffs:
     AShape = (8,8)
     A = np.empty(AShape)
     b = np.empty(8)
@@ -167,41 +167,41 @@ def TSat2spinodal(AS, FluidName, backend, T_sat):
     # get values from CoolProp
     for idx in range(0,nPoints):
         # AT the vap line
-        HEOS.update(CP.QT_INPUTS, 1, T_sat[idx])  
-        delta_vap[idx] = HEOS.delta() 
+        HEOS.update(CP.QT_INPUTS, 1, T_sat[idx])
+        delta_vap[idx] = HEOS.delta()
         tau_vap[idx] = HEOS.tau()
         p_vap[idx] = HEOS.p()
         d_vap[idx] = HEOS.rhomass()
-        f_vap[idx] = Rs*T_sat[idx]*( HEOS.alpha0() + HEOS.alphar() )   
+        f_vap[idx] = Rs*T_sat[idx]*( HEOS.alpha0() + HEOS.alphar() )
         dP_dD_T_vap[idx] = HEOS.first_partial_deriv(CP.iP, CP.iDmass, CP.iT)
         d2P_dD2_T_vap[idx] = HEOS.second_partial_deriv(CP.iP, CP.iDmass, CP.iT, CP.iDmass, CP.iT)
-        d2P_dDdT_vap[idx] = HEOS.second_partial_deriv(CP.iP, CP.iDmass, CP.iT, CP.iT, CP.iDmass)     
-        
+        d2P_dDdT_vap[idx] = HEOS.second_partial_deriv(CP.iP, CP.iDmass, CP.iT, CP.iT, CP.iDmass)
+
         # AT the liq line
-        HEOS.update(CP.QT_INPUTS, 0, T_sat[idx])  
-        delta_liq[idx] = HEOS.delta() 
+        HEOS.update(CP.QT_INPUTS, 0, T_sat[idx])
+        delta_liq[idx] = HEOS.delta()
         tau_liq[idx] = HEOS.tau()
-        p_liq[idx] = HEOS.p() 
-        d_liq[idx] = HEOS.rhomass() 
+        p_liq[idx] = HEOS.p()
+        d_liq[idx] = HEOS.rhomass()
         f_liq[idx] = Rs*T_sat[idx]*( HEOS.alpha0() + HEOS.alphar() )
         # f_liq[idx] = HEOS.umass() - T_sat[idx]*HEOS.smass()
         dP_dD_T_liq[idx] = HEOS.first_partial_deriv(CP.iP, CP.iDmass, CP.iT)
-        d2P_dD2_T_liq[idx] = HEOS.second_partial_deriv(CP.iP, CP.iDmass, CP.iT, CP.iDmass, CP.iT)   
-        d2P_dDdT_liq[idx] = HEOS.second_partial_deriv(CP.iP, CP.iDmass, CP.iT, CP.iT, CP.iDmass)   
+        d2P_dD2_T_liq[idx] = HEOS.second_partial_deriv(CP.iP, CP.iDmass, CP.iT, CP.iDmass, CP.iT)
+        d2P_dDdT_liq[idx] = HEOS.second_partial_deriv(CP.iP, CP.iDmass, CP.iT, CP.iT, CP.iDmass)
 
         # calculate metastable coeffs by solving Ax=b
-        A = np.array([  [1/tau_vap[idx], -1/delta_vap[idx]/tau_vap[idx],  log(delta_vap[idx]),          delta_vap[idx],     delta_vap[idx]**2/2,       delta_vap[idx]**3/3,         delta_vap[idx]**4/4,        delta_vap[idx]**5/5 ], 
-                        [1/tau_liq[idx], -1/delta_liq[idx]/tau_liq[idx],  log(delta_liq[idx]),          delta_liq[idx],     delta_liq[idx]**2/2,       delta_liq[idx]**3/3,         delta_liq[idx]**4/4,        delta_liq[idx]**5/5 ], 
-                        [             0,             d_crt/tau_vap[idx], d_crt*delta_vap[idx], d_crt*delta_vap[idx]**2, d_crt*delta_vap[idx]**3,    d_crt*delta_vap[idx]**4,    d_crt*delta_vap[idx]**5,    d_crt*delta_vap[idx]**6 ], 
-                        [             0,             d_crt/tau_liq[idx], d_crt*delta_liq[idx], d_crt*delta_liq[idx]**2, d_crt*delta_liq[idx]**3,    d_crt*delta_liq[idx]**4,    d_crt*delta_liq[idx]**5,    d_crt*delta_liq[idx]**6 ], 
-                        [             0,                              0,                    1,        2*delta_vap[idx],     3*delta_vap[idx]**2,        4*delta_vap[idx]**3,        5*delta_vap[idx]**4,        6*delta_vap[idx]**5 ], 
-                        [             0,                              0,                    1,        2*delta_liq[idx],     3*delta_liq[idx]**2,        4*delta_liq[idx]**3,        5*delta_liq[idx]**4,        6*delta_liq[idx]**5 ], 
-                        [             0,                              0,                    0,                 2/d_crt,  6*delta_vap[idx]/d_crt, 12*delta_vap[idx]**2/d_crt, 20*delta_vap[idx]**3/d_crt, 30*delta_vap[idx]**4/d_crt ], 
+        A = np.array([  [1/tau_vap[idx], -1/delta_vap[idx]/tau_vap[idx],  log(delta_vap[idx]),          delta_vap[idx],     delta_vap[idx]**2/2,       delta_vap[idx]**3/3,         delta_vap[idx]**4/4,        delta_vap[idx]**5/5 ],
+                        [1/tau_liq[idx], -1/delta_liq[idx]/tau_liq[idx],  log(delta_liq[idx]),          delta_liq[idx],     delta_liq[idx]**2/2,       delta_liq[idx]**3/3,         delta_liq[idx]**4/4,        delta_liq[idx]**5/5 ],
+                        [             0,             d_crt/tau_vap[idx], d_crt*delta_vap[idx], d_crt*delta_vap[idx]**2, d_crt*delta_vap[idx]**3,    d_crt*delta_vap[idx]**4,    d_crt*delta_vap[idx]**5,    d_crt*delta_vap[idx]**6 ],
+                        [             0,             d_crt/tau_liq[idx], d_crt*delta_liq[idx], d_crt*delta_liq[idx]**2, d_crt*delta_liq[idx]**3,    d_crt*delta_liq[idx]**4,    d_crt*delta_liq[idx]**5,    d_crt*delta_liq[idx]**6 ],
+                        [             0,                              0,                    1,        2*delta_vap[idx],     3*delta_vap[idx]**2,        4*delta_vap[idx]**3,        5*delta_vap[idx]**4,        6*delta_vap[idx]**5 ],
+                        [             0,                              0,                    1,        2*delta_liq[idx],     3*delta_liq[idx]**2,        4*delta_liq[idx]**3,        5*delta_liq[idx]**4,        6*delta_liq[idx]**5 ],
+                        [             0,                              0,                    0,                 2/d_crt,  6*delta_vap[idx]/d_crt, 12*delta_vap[idx]**2/d_crt, 20*delta_vap[idx]**3/d_crt, 30*delta_vap[idx]**4/d_crt ],
                         [             0,                              0,                    0,                 2/d_crt,  6*delta_liq[idx]/d_crt, 12*delta_liq[idx]**2/d_crt, 20*delta_liq[idx]**3/d_crt, 30*delta_liq[idx]**4/d_crt ]])
         A = Rs*T_crt*A
         b = np.array([f_vap[idx], f_liq[idx], p_vap[idx], p_liq[idx], dP_dD_T_vap[idx], dP_dD_T_liq[idx], d2P_dD2_T_vap[idx], d2P_dD2_T_liq[idx]])
         x[idx] = solve(A,b)
-    
+
     pms = np.ones(nPoints)
 
     N=nPoints-1
@@ -217,9 +217,9 @@ def TSat2spinodal(AS, FluidName, backend, T_sat):
         myIdx = int(myIdx)
         T_iso = T_sat[myIdx]
         tau_iso = T_crt/T_iso
-        
+
         c = x[myIdx,:]
-        d_min = 0.8*d_vap[myIdx] 
+        d_min = 0.8*d_vap[myIdx]
         # verificar se válido !
         #d_max = PropsSI('D','T',T_iso,'P',p_max,FluidName)
         d_max = d_trp_liq
@@ -230,7 +230,7 @@ def TSat2spinodal(AS, FluidName, backend, T_sat):
             # stable
             pms[idx]  = Rs*T_crt*d_crt*( 0       +c[1]/tau_iso             +c[2]*deltas[idx]      +c[3]*deltas[idx]**2 +c[4]*deltas[idx]**3   +c[5]*deltas[idx]**4   +c[6]*deltas[idx]**5   +c[7]*deltas[idx]**6   )
 
-            
+
         dpdrho_T = np.gradient(pms)/np.gradient(rhos)
         inflection = np.where( ((np.diff(np.sign(dpdrho_T)) != 0)*1) == 1 )[0]
         Tspin[i] = T_iso
@@ -239,7 +239,7 @@ def TSat2spinodal(AS, FluidName, backend, T_sat):
         rhorspin_liq[i] = (rhos/d_crt)[inflection[0]]
         rhorspin_vap[i] = (rhos/d_crt)[inflection[1]]
 
-    return Tspin, pspin_liq, pspin_vap 
+    return Tspin, pspin_liq, pspin_vap
 
 
 class AbstractState(CP.AbstractState):
@@ -264,9 +264,9 @@ class AbstractState(CP.AbstractState):
     def p_triple(self):
         abs = CP.AbstractState('HEOS', self.fluidname)
         abs.set_mass_fractions(self.get_mass_fractions())
-        
+
         return abs.trivial_keyed_output(CP.iP_triple)
-        
+
 
     def getProp(self, prop):
         try:
@@ -298,26 +298,26 @@ class AbstractState(CP.AbstractState):
 
     def coolpropname(self, decimalplaces=False):
         fluidname = self.fluid_names()
-        
+
         if len(fluidname) > 1:
             molef = self.get_mole_fractions()
             fluid = ''
             for f,m in zip(fluidname,molef):
-                if decimalplaces==1:   
+                if decimalplaces==1:
                     fluid = fluid + f + '[' + '{:.1f}'.format(m) + ']&'
-                elif decimalplaces==2:   
+                elif decimalplaces==2:
                     fluid = fluid + f + '[' + '{:.2f}'.format(m) + ']&'
-                elif decimalplaces==3:   
+                elif decimalplaces==3:
                     fluid = fluid + f + '[' + '{:.3f}'.format(m) + ']&'
-                elif decimalplaces==4:   
+                elif decimalplaces==4:
                     fluid = fluid + f + '[' + '{:.4f}'.format(m) + ']&'
-                elif decimalplaces==5:   
+                elif decimalplaces==5:
                     fluid = fluid + f + '[' + '{:.5f}'.format(m) + ']&'
-                elif decimalplaces==6:   
+                elif decimalplaces==6:
                     fluid = fluid + f + '[' + '{:.6f}'.format(m) + ']&'
-                elif decimalplaces==7:   
+                elif decimalplaces==7:
                     fluid = fluid + f + '[' + '{:.7f}'.format(m) + ']&'
-                elif decimalplaces==8:   
+                elif decimalplaces==8:
                     fluid = fluid + f + '[' + '{:.8f}'.format(m) + ']&'
                 else:
                     fluid = fluid + f + '[' + str(m) + ']&'
@@ -326,14 +326,14 @@ class AbstractState(CP.AbstractState):
         else:
             fluid = fluidname[0]
         return fluid
-    
+
 
 class RGP:
     # Classe de abstração para uma tabela de propriedades de gas real (RGP)
     def __init__(self):
-        
+
         pass
-    
+
     def setInterpKind(self, kind):
         self.interpKind = kind
 
@@ -361,18 +361,18 @@ class RGP:
         else:
             massf= []
         backend = args['backend']
-        if backend == 'REFPROP': 
-            setREFPROP_PATH(path=args['refprop_path'])   
+        if backend == 'REFPROP':
+            setREFPROP_PATH(path=args['refprop_path'])
         p = [float(pi) for pi in args['pressures'].split(",")]
         T = [float(pi) for pi in args['temperatures'].split(",")]
         if args['sat_table_range'] is not None:
             Tsat = [float(pi) for pi in args['Sat_table_range'].split(",")]
-        else: 
-            Tsat = None         
-        NT = int(args['n_temperatures'])        
+        else:
+            Tsat = None
+        NT = int(args['n_temperatures'])
         Np = int(args['n_pressures'])
         Ns = int(args['n_saturation'])
-        model = int(args['model']) 
+        model = int(args['model'])
         fname = args['output_file']
         meta = parseBool(args['metastable'])
         sat = parseBool(args['sat_table'])
@@ -425,9 +425,9 @@ class RGP:
         self.writeSatTableMatrices()
         self.closeFile()
         self.etime()
-        
+
         pformat = args['plotFormat']
-        
+
         if args['plotTS'] is not None:
             self.plotTs(args['plotTS'], isobars=10, save=True, format=pformat)
         if args['plotPH'] is not None:
@@ -496,7 +496,7 @@ class RGP:
 
     def setMetastable(self, val):
         self.metastable = val
-    
+
     def setSpinodal(self, val):
         self.spinodal = val
 
@@ -504,11 +504,11 @@ class RGP:
         self.Tmin = Tmin
         self.Tmax = Tmax
 
-        self.Tminsat = max(self.Ttrip, Tmin) 
+        self.Tminsat = max(self.Ttrip, Tmin)
         self.Tmaxsat = min(self.Tcrit, Tmax)
 
         self.print(f'T: [{self.Tmin}: {self.Tmax}] K')
-    
+
     def setTsat(self, Tminsat, Tmaxsat):
         self.Tminsat = Tminsat
         self.Tmaxsat = Tmaxsat
@@ -565,7 +565,7 @@ class RGP:
     def genSuperTables(self):
         self.alocSuperTables()
 
-        self.print('Generating Super Tables... ', end='\t')
+        self.print('Generating Super Tables... ', end='\n')
         stime = time.time()
 
         if self.mixture:
@@ -580,7 +580,7 @@ class RGP:
             for idx, T in enumerate(T_sat):
                 self.fluid.update(CP.QT_INPUTS, 1, T_sat[idx])
                 p_vap[idx] = self.fluid.p()
-            
+
                 self.fluid.update(CP.QT_INPUTS, 0, T_sat[idx])
                 p_liq[idx] = self.fluid.p()
 
@@ -590,9 +590,9 @@ class RGP:
             self.p_spl_vap = UnivariateSpline(np.hstack((T_sat, Tcrit)),
                                         np.hstack((p_vap, pcrit)),k=3,s=0)
 
-            self.T_spl_liq = UnivariateSpline(np.hstack((p_liq, pcrit)), 
+            self.T_spl_liq = UnivariateSpline(np.hstack((p_liq, pcrit)),
                                 np.hstack((T_sat, Tcrit)),k=3,s=0)
-            self.T_spl_vap = UnivariateSpline(np.hstack((p_vap, pcrit)), 
+            self.T_spl_vap = UnivariateSpline(np.hstack((p_vap, pcrit)),
                                 np.hstack((T_sat, Tcrit)),k=3,s=0)
 
             self.p_sat_liq = np.linspace(self.p_spl_liq(self.Tmin),
@@ -604,7 +604,7 @@ class RGP:
             Q = 0
             self.pmin = self.p_spl_liq(self.Tmin)
             self.table['p'] = np.linspace(self.pmin, self.pmax, self.Np)
-        elif self.sat_phase == 'gas':    
+        elif self.sat_phase == 'gas':
             Q = 1
 
         for j, p in enumerate(self.table['p']):
@@ -612,9 +612,9 @@ class RGP:
                 # Controla se corrige o erro de pressão muito proximo a saturação
                 fix = False
                 if self.fluid.backend!='REFPROP':
-                    fix = True 
+                    fix = True
 
-                # if clipping    
+                # if clipping
                 if p < self.pcrit and T < self.Tcrit and self.clipping:
                     self.fluid.updatePQ(p,Q)
                     Tsat = self.fluid.getProp('T')
@@ -622,7 +622,7 @@ class RGP:
                         self.fluid = specify_phase(self.fluid , p, T, self.pcrit, self.Tcrit)
                         self.fluid.updateTP(T, p)
                 # if fix
-                elif fix: 
+                elif fix:
                     try:
                         self.fluid = specify_phase(self.fluid , p, T, self.pcrit, self.Tcrit)
                         self.fluid.updateTP(T, p)
@@ -639,8 +639,8 @@ class RGP:
                         self.fluid.updateTP(T, p)
                     except:
                         pass
-            
-                
+
+
                 for prop in self.properties:
                     self.table[prop][j, i] = self.fluid.getProp(prop)
                     #acho que está invertido...
@@ -652,8 +652,8 @@ class RGP:
             #    self.fluid.updateTP(self.Tcrit, p)
 
             if self.mixture:
-                if p < self.pcrit:   
-                    if Q == 0:     
+                if p < self.pcrit:
+                    if Q == 0:
                         # precisa de correção ajustar intervalo da tabela para conter a curva de saturação do vapor
                         Tsat = self.T_spl_liq(p)
                     elif Q == 1:
@@ -685,7 +685,7 @@ class RGP:
             self.alocMetaTable()
 
             self.print('Generating Metastable Table... ', end='\t')
-            stime = time.time()          
+            stime = time.time()
 
             if self.mixture:
                 pspin_liq = self.table['psatliq']
@@ -693,11 +693,11 @@ class RGP:
             else:
                 # curva Spinodal valores discretos
                 Tsat = self.table['Tsatliq']
-            
+
                 fluid = self.fluid.coolpropname()
 
                 Tspin, pspin_liq, pspin_vap = TSat2spinodal(self.fluid, fluid, self.fluid.backend, Tsat[1:-1])
-                
+
                 # adiciona o ponto critico aos vetores
                 Tspin = np.append(Tspin, self.Tcrit)
                 pspin_liq = np.append(pspin_liq, self.pcrit)
@@ -710,14 +710,14 @@ class RGP:
                 pspin_vap = pspin_vap[idxs]
 
             # cria função para a tempertura na spinodal
-            
+
             T_spin = interpolate.UnivariateSpline(pspin_liq, Tspin)
             p_spin = interpolate.UnivariateSpline(Tspin, pspin_liq)
 
             f_spin_p = {}
             f_spin_T = {}
             f_sat_T = {}
-            for prop in self.properties: 
+            for prop in self.properties:
                 y = np.zeros_like(pspin_liq[:])
                 for i, (p,T) in enumerate(zip(pspin_liq[:], Tspin[:] )):
                     try:
@@ -727,7 +727,7 @@ class RGP:
                         self.fluid.unspecify_phase()
                     except:
                         y[i] = np.nan
-                
+
                 idx = np.where(np.isnan(y))
                 pspin_liq = np.delete(pspin_liq,idx)
                 y = np.delete(y,idx)
@@ -735,8 +735,8 @@ class RGP:
 
                 f_spin_p[prop] = interpolate.UnivariateSpline(pspin_liq, y)# , bounds_error=False, fill_value=(y[0],y[-1]), kind='cubic')
                 f_spin_T[prop] = interpolate.UnivariateSpline(Tspin, y)# , bounds_error=False, fill_value=(y[0],y[-1]), kind='cubic')
-            
-            
+
+
             # Gera spinodal no intervalo da tabela
             for j, p in enumerate(self.table['p']):
                 if p < self.pcrit:
@@ -755,7 +755,7 @@ class RGP:
                     else:
                         self.table[prop+'spin'][j] = f_spin_p[prop](p)
                     self.fluid.unspecify_phase()
-                    
+
 
             # interpola na região de metaestabilidade
             if self.interpMeta=='p'and self.metastable:
@@ -771,14 +771,14 @@ class RGP:
                                     prop_spin = f_spin_p[prop](pspin)
                                     if p < pspin*1.01 \
                                         and p > psat*0.99:
-                                            
+
                                         jlow = np.where(self.table['p'] < psat)
                                         plow = self.table['p'][jlow]
                                         jup = np.where(self.table['p'] > pspin)
                                         pup = self.table['p'][jup]
-                                        proplow = self.table[prop][jlow,i][0]      
+                                        proplow = self.table[prop][jlow,i][0]
                                         propup = self.table[prop][jup,i][0]
-                                        
+
                                         Np = 5
                                         if len(plow) < Np:
                                             dp = abs(self.table['p'][1]-self.table['p'][0])
@@ -792,20 +792,20 @@ class RGP:
 
                                         if self.mixture:
                                             idx=1
-                                            x=np.hstack([plow[:-idx],  
+                                            x=np.hstack([plow[:-idx],
                                                         pup[idx:]])
-                                            y=np.hstack([proplow[:-idx], 
+                                            y=np.hstack([proplow[:-idx],
                                                          propup[idx:]])
                                         else:
                                             x=np.hstack([plow, pup])
                                             y=np.hstack([proplow, propup])
-                                        
-                                        
+
+
                                         f = interpolate.interp1d(x, y, bounds_error=False, fill_value=(y[0],y[-1]), kind=self.interpKind)
-                                        
+
                                         # dpdvT ?
                                         self.table[prop+'meta'][j, i] = f(p)
-                            
+
                             self.fluid.unspecify_phase()
 
             elif self.interpMeta=='T' and self.metastable:
@@ -819,35 +819,35 @@ class RGP:
                                     Tsat = self.fluid.getProp('T')
                                     if T > Tspin*1.01 \
                                         and T < Tsat*1.01:
-                                            
+
                                         prop_sat = self.fluid.getProp(prop)
                                         prop_spin = f_spin_T[prop](T)
 
                                         x=[Tspin, Tsat]
                                         y=[prop_spin, prop_sat]
                                         f = interpolate.interp1d(x, y, bounds_error=False, fill_value=(y[0],y[-1]))
-                                        
+
                                         self.table[prop+'meta'][j, i] = f(T)
-                            
+
             for j, p in enumerate(self.table['psatliq']):
                 Ts = T_spin(p)
                 self.table['pspinliq'][j] = p
                 self.table['Tspinliq'][j] = Ts
                 for prop in self.properties:
                     self.table[prop+'spinliq'][j] = f_spin_p[prop](p)
-                
+
             etime = time.time() - stime
             self.print('{:.4f}'.format(etime) + ' sec')
-        
+
 
     def genSatTable(self):
         #self.fluid.unspecify_phase()
         self.alocSatTable()
-        
+
         self.print('Generating Sat Table... ', end='\t')
         stime = time.time()
 
-        
+
         if self.mixture:
 
             self.fluid.specify_phase(CP.iphase_liquid)
@@ -865,7 +865,7 @@ class RGP:
                     self.table[prop+'satvap'][j] = self.fluid.getProp(prop)
 
         else:
-        
+
             # Liquido
             self.fluid.specify_phase(CP.iphase_liquid)
             self.fluid.updateQT(0, self.Tminsat)
@@ -880,8 +880,8 @@ class RGP:
                 self.fluid.updatePQ(p, 0)
                 for prop in ['T']+self.properties:
                     self.table[prop+'satliq'][j] = self.fluid.getProp(prop)
-         
-           
+
+
             # Vapor
             self.fluid.specify_phase(CP.iphase_gas)
             self.fluid.updateQT(1, self.Tminsat)
@@ -901,10 +901,10 @@ class RGP:
 
         self.fluid.unspecify_phase()
 
-        
+
         etime = time.time() - stime
         self.print('{:.4f}'.format(etime) + ' sec')
-    
+
 
     def genTables(self, NT, Np):
         self.genSuperTables()
@@ -927,62 +927,62 @@ class RGP:
 
             f.write('$$SAT_TABLE \n')
             f.write('\t'+str(self.Np) + '\t4\t9')
-            
-            for i, t in enumerate(['p', 'T']): 
+
+            for i, t in enumerate(['p', 'T']):
                 if self.spinodal:
                     f.write(vec2str(self.table[t+'spinliq'].flatten()))
                 else:
                     f.write(vec2str(self.table[t+'satliq'].flatten()))
-            
+
             for i, t in enumerate(['p', 'T']):
                 f.write(vec2str(self.table[t+'satvap'].flatten()))
-            
+
             for i, t in enumerate(self.properties):
                 if self.spinodal:
                     f.write(vec2str(self.table[t+'spinliq'].flatten()))
                 else:
                     f.write(vec2str(self.table[t+'satliq'].flatten()))
                 f.write(vec2str(self.table[t+'satvap'].flatten()))
-            
-            
+
+
 
             etime = time.time() - stime
             self.print('{:.4f}'.format(etime) + ' sec')
 
     def writeSatTableMatrices(self):
-    
+
         if self.sat_table:
             dict_mat = {}
             self.print('Writing Sat Table Matrices... ', end='\t\t')
             stime = time.time()
 
-            
-            for i, t in enumerate(['p', 'T']): 
+
+            for i, t in enumerate(['p', 'T']):
                 if self.spinodal:
                     dict_mat[t+'spinliq'] = self.table[t+'spinliq']
                 else:
                     dict_mat[t+'satliq'] = self.table[t+'satliq']
-            
+
             for i, t in enumerate(['p', 'T']):
                 dict_mat[t+'satvap'] = self.table[t+'satvap']
-            
+
             for i, t in enumerate(self.properties):
                 if self.spinodal:
                     dict_mat[t+'spinliq'] = self.table[t+'spinliq']
                 else:
                     dict_mat[t+'satliq'] = self.table[t+'satliq']
                 dict_mat[t+'satvap']=self.table[t+'satvap']
-            
+
             fname = Path(self.fname).resolve().with_suffix('').__str__()
             fname += '_sat.mat'
-            savemat(file_name=fname, 
+            savemat(file_name=fname,
                     mdict=dict_mat,
                     appendmat=False,
                     format='5',
                     long_field_names=False,
                     do_compression=False,
                     oned_as='row')
-            
+
             etime = time.time() - stime
             self.print('{:.4f}'.format(etime) + ' sec')
 
@@ -997,7 +997,7 @@ class RGP:
             f.write(vec2str(self.table['T']))
             f.write(vec2str(self.table['p']))
 
-            
+
             if self.metastable:
                 f.write(vec2str(self.table[t+'meta'].flatten()))
             else:
@@ -1011,7 +1011,7 @@ class RGP:
         etime = time.time() - stime
         self.print('{:.4f}'.format(etime) + ' sec')
 
-    def writeSuperTablesMatrices(self): 
+    def writeSuperTablesMatrices(self):
         dict_mat = {}
         self.print('Writing Super Tables Matrices... ', end='\t')
         stime = time.time()
@@ -1020,7 +1020,7 @@ class RGP:
             'T': self.table['T'],
             'p': self.table['p']}
         for i, t in enumerate(self.properties):
-    
+
             if self.metastable:
                 dict_mat[t] = self.table[t+'meta']
             else:
@@ -1029,14 +1029,14 @@ class RGP:
             dict_mat['Tsat'] = self.table['Tsat']
             dict_mat[t+'sat'] = self.table[t+'sat']
 
-        savemat(file_name=Path(self.fname).with_suffix('.mat'), 
+        savemat(file_name=Path(self.fname).with_suffix('.mat'),
                 mdict=dict_mat,
                 appendmat=False,
                 format='5',
                 long_field_names=False,
                 do_compression=False,
                 oned_as='row')
-       
+
         etime = time.time() - stime
         self.print('{:.4f}'.format(etime) + ' sec')
 
@@ -1115,7 +1115,7 @@ class RGP:
         self.writeParams()
         f.write(f'$$SUPER_TABLE \n')
         f.write('\t9 \n')
-        
+
     def setModel(self, m):
         # 1,2,3 are available
         # 1: multiphase non-equilibrium
@@ -1140,7 +1140,7 @@ class RGP:
         if self.spinodal:
             self.table['Tsat'] = self.table['Tspin']
             self.table['psat'] = self.table['pspin']
-            
+
 
     def plotPT(self, prop, cbarlabel='', ax=None, sct=False, save=False, format='png'):
         if prop == 'all':
@@ -1154,7 +1154,7 @@ class RGP:
             if self.metastable:
                 meta = 'meta'
             p, T = np.meshgrid(self.table['p'], self.table['T'])
-                
+
             phi = self.table[prop+meta].T
             #vmi, vma = scalePlot(prop)
             cm = ax.pcolormesh(T, p, phi)#, vmin=vmi, vmax=vma)
@@ -1251,7 +1251,7 @@ class RGP:
             if self.metastable:
                 meta = 'meta'
             p, T = np.meshgrid(self.table['p'], self.table['T'])
-            
+
             s = self.table['s'+meta].T
             if prop == 'p':
                 phi = p
@@ -1264,8 +1264,8 @@ class RGP:
             if sct:
                 ax.scatter(s, T, color='k',s=0.5)
 
-           
-            
+
+
             if self.spinodal and not self.mixture:
                 ax.plot(self.table['sspinliq'], self.table['Tspinliq'], color='orange', ls=':', label='spinodal liquid')
 
@@ -1282,7 +1282,7 @@ class RGP:
                 for i in range(0,s[0,:].size):
                     if i%n==0:
                         ax.plot(s[:,i],T[:,i], ls=':', color='r')
-                      
+
             ax.set_xlabel(r"${}\;{}$".format('s', getUnit('s')))
             ax.set_ylabel(r"${}\;{}$".format('T', getUnit('T')))
             ax.set_ylim([self.Tmin,self.Tmax])
@@ -1297,17 +1297,17 @@ desc=textwrap.dedent('''\
          RGP Table Generator v.0
          -----------------------
              - Support for CoolProp and REFPROP backends
-             - Able to create a liquid-like metastable region 
+             - Able to create a liquid-like metastable region
              - Capable of replacing saturation curve with spinodal line
              - Sucessfully tested for CO2
 
          Sample command to generate a RGP table for CO2
          ----------------------------------------------
-          
+
             python3 RGP.py -f 'CO2' -b 'REFPROP' -p 3e6,10e6 -T 250,350 -rp /home/ppiper/MEGA/refprop -c False -nT 100 -np 100 -ns 100 -mo 3 -me True -st True -sf gas -sp True -op ./outputs/ -o CO2_100_100.rgp
 
              - python3 should match the python 3 interpreter alias of your operational system
-         
+
             Mixtures only working with `REFPROP` backend, in this case fluid name should be given as the AbstractState string standard, and mass fractions as a list `0,1`, example:
 
             - python3.8 RGP_.py -f 'CO2&Methane' -mf 0.95,0.05 -b REFPROP -p 1e6,20e6 -T 250,500 -rp /home/ppiper/MEGA/refprop -nT 100 -np 100 -me True -op ./outputs/ -o CO2_50_50_COOLPROP.rgp
@@ -1320,7 +1320,7 @@ desc=textwrap.dedent('''\
             -numpy==1.17.4
             -pandas==1.3.5
             -scipy==1.7.3
-         ''') 
+         ''')
 
 ap = argparse.ArgumentParser(description=desc,formatter_class=argparse.RawDescriptionHelpFormatter)#,usage='%(prog)s [optional argument] value')
 ap.add_argument("-f", "--fluid", required=True, help="CoolProp fluidname")
@@ -1356,7 +1356,7 @@ def mainSample():
     #fluid = 'CO2'
     #mf = []
     backend = 'REFPROP'
-    
+
 
     mfs = ['0.1,0.9',
            '0.2,0.8',
@@ -1382,7 +1382,7 @@ def mainSample():
                                 '-c','False',
                                 '-nT',str(N),
                                 '-np',str(N),
-                                '-ns',str(N), 
+                                '-ns',str(N),
                                 '-mo','3',
                                 '-op','outputs_' + str(mf.split(',')[0]) + '/',
                                 '-me','True',
@@ -1392,12 +1392,12 @@ def mainSample():
                                 '-o', fname + '.rgp',
                                 'ik', 'linear']))
 
-        
+
         rgp = RGP()
         rgp.genRGP(args)
 
         print('----------------------')
-    
+
     rgp.plotTs('all', isobars=10, save=True)
     rgp.plotPH('all', isothermals=10, save=True)
     rgp.plotPT('all', save=True)
@@ -1417,7 +1417,7 @@ def main():
     rgp.genRGP(args)
 
 
-    
+
     #rgp.plotTs('all', isobars=10, save=True)
     #rgp.plotPH('all', isothermals=10, save=True)
     #rgp.plotPT('all', save=True)
